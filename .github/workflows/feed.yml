@@ -1,0 +1,33 @@
+name: Actualizar feed
+
+on:
+  schedule:
+    - cron: "0 9 * * *"   # 6:00 Argentina (9:00 UTC), todos los días
+  workflow_dispatch:       # botón "Run workflow" para correrlo a mano
+
+permissions:
+  contents: write
+
+jobs:
+  feed:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Generar
+        run: python generar_feed_mx.py nuevo.xml
+      - name: Controlar y publicar
+        run: |
+          n=$(grep -c "<item>" nuevo.xml)
+          echo "ítems: $n"
+          # Si la web devolvió poco, no se pisa el feed: Google sigue leyendo el de ayer.
+          if [ "$n" -lt 300 ]; then echo "Muy pocos ítems, no se publica"; exit 1; fi
+          mv nuevo.xml mihran-mx-google-shopping.xml
+          git config user.name "feed-bot"
+          git config user.email "feed-bot@users.noreply.github.com"
+          git add mihran-mx-google-shopping.xml
+          git commit -m "Feed $(date -u +%F)" || echo "Sin cambios"
+          git push
