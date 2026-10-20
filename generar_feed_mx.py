@@ -61,22 +61,9 @@ def product_type(p):
     return " > ".join(["Hogar"] + partes)
 
 
-def rango_precio(precio):
-    if precio < 3000:
-        return "menos de 3000"
-    if precio < 8000:
-        return "3000 a 8000"
-    if precio < 20000:
-        return "8000 a 20000"
-    return "mas de 20000"
-
-
 def items(productos):
     for p in productos:
         material = ", ".join(p.get("COMPOSICIÓN", []))
-        pelo = ", ".join(p.get("TIPO DE PELO", []))
-        categorias = [c.strip("/").split("/")[-1] for c in p["categories"]]
-        subcat = next((c for c in categorias if c not in ("Category", "Alfombras")), "")
         for it in p["items"]:
             oferta = next((s["commertialOffer"] for s in it["sellers"] if s.get("sellerDefault")), it["sellers"][0]["commertialOffer"])
             precio, lista = oferta["Price"], oferta["ListPrice"]
@@ -111,12 +98,12 @@ def items(productos):
             x += tag("g:color", color)
             x += tag("g:size", medida)
             x += tag("g:material", material)
-            x += tag("g:pattern", subcat)
-            x += tag("g:custom_label_0", subcat)
-            x += tag("g:custom_label_1", rango_precio(precio))
-            x += tag("g:custom_label_2", "oferta" if con_oferta else "precio lista")
-            x += tag("g:custom_label_3", "new in" if any("New In" in c for c in p["productClusters"].values()) else "")
-            x += tag("g:custom_label_4", pelo)
+            # pattern = la subcategoría principal, la misma hoja que product_type.
+            x += tag("g:pattern", product_type(p).split(" > ")[-1])
+            # Etiquetas base que pidió Shake (19/10/2026): SALE, NEW IN y Yute & Sisal como core category.
+            x += tag("g:custom_label_0", "SALE" if con_oferta else "")
+            x += tag("g:custom_label_1", "NEW IN" if any("New In" in c for c in p["productClusters"].values()) else "")
+            x += tag("g:custom_label_2", "Core Category" if any("Yute & Sisal" in c for c in p["categories"]) else "")
             x += "    </item>\n"
             yield x
 

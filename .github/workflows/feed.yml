@@ -2,7 +2,11 @@ name: Actualizar feed
 
 on:
   schedule:
-    - cron: "0 9 * * *"   # 6:00 Argentina (9:00 UTC), todos los días
+    # Merchant Center lo baja a las 00:00. GitHub puede atrasar los cron hasta ~1 h,
+    # así que corre a las 22:00 de Argentina (19:00 de México), con margen para ambos husos,
+    # y otra vez a la mañana por si la corrida de la noche falla.
+    - cron: "0 1 * * *"   # 22:00 Argentina / 19:00 México
+    - cron: "0 9 * * *"   # 6:00 Argentina
   workflow_dispatch:       # botón "Run workflow" para correrlo a mano
 
 permissions:
